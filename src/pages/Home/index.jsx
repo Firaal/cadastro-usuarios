@@ -1,12 +1,36 @@
 import "./style.css";
 import Trash from "../../assets/trash.svg";
 import api from "../../services/api";
+import { useEffect, useState, useRef } from "react";
 
 function Home() {
-    let videos = [];
+    const [videos, setVideos] = useState([]);
 
     async function getVideos() {
-        videos = await api.get("/videos");
+        const videosFromApi = await api.get("/videos");
+        setVideos(videosFromApi.data);
+    }
+
+    useEffect(() => {
+        getVideos();
+    }, []);
+
+    const inputTitle = useRef();
+    const inputDescricao = useRef();
+    const inputDuracao = useRef();
+
+    async function createVideo() {
+        await api.post("/videos", {
+            title: inputTitle.current.value,
+            description: inputDescricao.current.value,
+            duration: inputDuracao.current.value,
+        });
+        getVideos();
+    }
+
+    async function deleteVideo(id) {
+        await api.delete(`/videos/${id}`);
+        getVideos();
     }
 
     return (
@@ -14,17 +38,17 @@ function Home() {
             <form action="" className="container__form">
                 <h1 className="form__title">Cadastro de videos</h1>
 
-                <input type="text" name="title" className="form__input" placeholder="Titulo" />
-                <input type="text" name="description" className="form__input" placeholder="Descrição" />
-                <input type="number" name="duration" className="form__input" placeholder="Duração" />
+                <input type="text" name="title" className="form__input" placeholder="Titulo" ref={inputTitle} />
+                <input type="text" name="description" className="form__input" placeholder="Descrição" ref={inputDescricao} />
+                <input type="number" name="duration" className="form__input" placeholder="Duração" ref={inputDuracao} />
 
-                <button type="button" className="form__button">
+                <button type="button" className="form__button" onClick={createVideo}>
                     Cadastrar
                 </button>
             </form>
 
             {videos.map((video) => (
-                <div className="container__card">
+                <div key={video.id} className="container__card">
                     <div>
                         <p>
                             Titulo: <span>{video.title}</span>
@@ -37,7 +61,7 @@ function Home() {
                         </p>
                     </div>
 
-                    <button>
+                    <button onClick={() => deleteVideo(video.id)}>
                         <img src={Trash} alt="Excluir" />
                     </button>
                 </div>
